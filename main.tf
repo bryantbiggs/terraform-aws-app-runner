@@ -51,7 +51,7 @@ resource "aws_apprunner_service" "this" {
   auto_scaling_configuration_arn = var.auto_scaling_configuration_arn
 
   dynamic "encryption_configuration" {
-    for_each = length(var.encryption_configuration) > 0 ? [var.encryption_configuration] : []
+    for_each = var.encryption_configuration ? [var.encryption_configuration] : []
 
     content {
       kms_key = encryption_configuration.value.kms_key
