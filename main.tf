@@ -1,4 +1,18 @@
-data "aws_partition" "current" {}
+data "aws_partition" "current" {
+  count = var.create ? 1 : 0
+}
+
+data "aws_service_principal" "build_apprunner" {
+  count = local.create_access_iam_role ? 1 : 0
+
+  service_name = "build.apprunner"
+}
+
+data "aws_service_principal" "tasks_apprunner" {
+  count = local.create_instance_iam_role ? 1 : 0
+
+  service_name = "tasks.apprunner"
+}
 
 ################################################################################
 # Service
@@ -198,7 +212,7 @@ data "aws_iam_policy_document" "access_assume_role" {
 
     principals {
       type        = "Service"
-      identifiers = ["build.apprunner.${data.aws_partition.current.dns_suffix}"]
+      identifiers = [data.aws_service_principal.build_apprunner[0].name]
     }
   }
 }
@@ -284,7 +298,7 @@ locals {
 }
 
 data "aws_iam_policy_document" "instance_assume_role" {
-  count = var.create && var.create_instance_iam_role ? 1 : 0
+  count = local.create_instance_iam_role ? 1 : 0
 
   statement {
     sid     = "InstanceAssumeRole"
@@ -292,7 +306,7 @@ data "aws_iam_policy_document" "instance_assume_role" {
 
     principals {
       type        = "Service"
-      identifiers = ["tasks.apprunner.${data.aws_partition.current.dns_suffix}"]
+      identifiers = [data.aws_service_principal.tasks_apprunner[0].name]
     }
   }
 }
@@ -315,7 +329,7 @@ resource "aws_iam_role" "instance" {
 resource "aws_iam_role_policy_attachment" "instance_xray" {
   count = local.create_instance_iam_role && try(var.observability_configuration.value.observability_enabled, false) ? 1 : 0
 
-  policy_arn = "arn:${data.aws_partition.current.id}:iam::aws:policy/AWSXRayDaemonWriteAccess"
+  policy_arn = "arn:${data.aws_partition.current[0].id}:iam::aws:policy/AWSXRayDaemonWriteAccess"
   role       = aws_iam_role.instance[0].name
 }
 

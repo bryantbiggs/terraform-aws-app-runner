@@ -2,7 +2,13 @@ provider "aws" {
   region = local.region
 }
 
-data "aws_availability_zones" "available" {}
+data "aws_availability_zones" "available" {
+  # Exclude local zones
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
+}
 
 locals {
   region = "us-east-1"
@@ -214,7 +220,7 @@ module "app_runner_disabled" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
+  version = "~> 6.0"
 
   name = local.name
   cidr = local.vpc_cidr
@@ -230,10 +236,9 @@ module "vpc" {
 
 module "vpc_endpoints" {
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
-  version = "~> 5.0"
+  version = "~> 6.0"
 
-  vpc_id             = module.vpc.vpc_id
-  security_group_ids = [module.vpc_endpoints_security_group.security_group_id]
+  vpc_id = module.vpc.vpc_id
 
   endpoints = {
     apprunner = {
@@ -242,6 +247,16 @@ module "vpc_endpoints" {
       subnet_ids = module.vpc.private_subnets
       tags       = { Name = "${local.name}-apprunner" }
     },
+  }
+
+  create_security_group      = true
+  security_group_name_prefix = "${local.name}-vpc-endpoints-"
+  security_group_description = "VPC endpoint security group"
+  security_group_rules = {
+    ingress_https = {
+      description = "HTTPS from subnets"
+      cidr_blocks = module.vpc.vpc_cidr_block
+    }
   }
 
   tags = local.tags
@@ -257,20 +272,6 @@ module "security_group" {
 
   egress_rules       = ["http-80-tcp"]
   egress_cidr_blocks = module.vpc.private_subnets_cidr_blocks
-
-  tags = local.tags
-}
-
-module "vpc_endpoints_security_group" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "~> 5.0"
-
-  name        = "${local.name}-vpc-endpoints"
-  description = "Security group for VPC Endpoints"
-  vpc_id      = module.vpc.vpc_id
-
-  egress_rules       = ["https-443-tcp"]
-  egress_cidr_blocks = [module.vpc.vpc_cidr_block]
 
   tags = local.tags
 }

@@ -234,6 +234,8 @@ No modules.
 | [aws_iam_policy_document.instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.instance_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
+| [aws_service_principal.build_apprunner](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/service_principal) | data source |
+| [aws_service_principal.tasks_apprunner](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/service_principal) | data source |
 
 ## Inputs
 
